@@ -1,26 +1,28 @@
-try:
-    import requests
-    import os
-    from datetime import date
-    from datetime import timedelta
-    from airflow import DAG
-    from airflow.operators.python_operator import PythonOperator
-    from datetime import datetime
+import requests
+import os
+from datetime import date
+import csv
+import pandas as pd
 
 
-    print("All Dag modules are ok ......")
-except Exception as e:
-    print("Error  {} ".format(e))
+# I am aware this is ridiculously over-engineered
+# these are your input variables change these to match your portfolio
+my_portfolio = ("MSFT", "BRKB", "TAN", "FSLR", "VOO","GME")
+shares_owned = [1, 2, 3, 4, 5,12]
+
+# these are all constants
+TODAY = date.today()
+TODAYS_DATE = TODAY.strftime("%b-%d-%Y")
+STOCKS_LIST = []
+API_KEY = os.environ.get('STOCK_API_KEY')  # Don't use a config because I'm only using the one secret
 
 
-def first_function_execute(stock_ticker, **context):
-    print("first_function_execute   ")
-    context['ti'].xcom_push(key='mykey', value="first_function_execute says Hello ")
-    my_portfolio = ("MSFT", "BRKB", "TAN", "FSLR", "VOO")
-    today = date.today()
-    todays_date = today.strftime("%b-%d-%Y")
-    stocks_list = []
-    API_KEY = 'f74ba0d0d10414840495409424bdc224'  # need to pass key manually for now don't know how to pass api key in continaer
+def get_stock(stock_ticker):
+    """
+    Gets the stock data for market stack api and appends symbol and most recent price to list of list
+    :param stock_ticker: takes the ticker for any given stock, doesn't work for alot of ETF's
+    :return: Does not return any values
+    """
     stock_list = stock_ticker
     params = {
         'access_key': API_KEY,
@@ -28,41 +30,29 @@ def first_function_execute(stock_ticker, **context):
     api_result = requests.get('http://api.marketstack.com/v1/intraday/latest', params)
     api_response = api_result.json()
     for stock_data in api_response['data']:
-        stocks_list.append([todays_date, stock_data['symbol'], stock_data['last']])   #only returning las telement will fix later
-    print(stocks_list)
+        STOCKS_LIST.append([TODAYS_DATE, stock_data['symbol'], stock_data['last']])
+    print(STOCKS_LIST)
 
-def second_function_execute(**context):
-    shares_owned = [1, 2, 3, 4, 5]
-    instance = context.get("ti").xcom_pull(key="mykey")
-    data = [{"name":"Soumil","title":"Full Stack Software Engineer"}, { "name":"Nitin","title":"Full Stack Software Engineer"},]
-    dates = [sublist[0] for sublist in STOCKS_LIST]
-    stock_codes = [sublist[1] for sublist in STOCKS_LIST]
-    price = [STOCKS_LIST[0][2] * shares_owned[i] for i in range(len(shares_owned))]
-    final_list = []
+for i in my_portfolio:
+    get_stock(i)
 
-with DAG(
-        dag_id="first_dag",
-        schedule_interval="@daily",
-        default_args={
-            "owner": "airflow",
-            "retries": 1,
-            "retry_delay": timedelta(minutes=5),
-            "start_date": datetime(2021, 1, 1),
-        },
-        catchup=False) as f:
 
-    first_function_execute = PythonOperator(
-        task_id="first_function_execute",
-        python_callable=first_function_execute,
-        provide_context=True,
-       # op_kwargs={"stock_ticker":"MSFT"} #provide args here
-        op_kwargs = {"stock_ticker": ("MSFT", "BRKB", "TAN", "FSLR", "VOO")}
-    )
+# way simpler way of doing this but again over-engineering for fun
+# use list comprehension to split so we can multiply the price by how many shares of each stock I own
+dates = [sublist[0] for sublist in STOCKS_LIST]
+stock_codes = [sublist[1] for sublist in STOCKS_LIST]
+price = [STOCKS_LIST[0][2] * shares_owned[i] for i in range(len(shares_owned))]
+final_list = []
 
-    second_function_execute = PythonOperator(
-        task_id="second_function_execute",
-        python_callable=second_function_execute,
-        provide_context=True,
-    )
+# put sub-lists back together again
+for i in range(len(shares_owned)):
+    final_list.append([dates[i], stock_codes[i], price[i]])
+print(final_list)
 
-first_function_execute >> second_function_execute
+
+
+
+with open('C:\\python_import\\stocks.csv', 'a', newline='') as csvfile:
+    data_write = csv.writer(csvfile)
+    data_write.writerows(final_list)
+print("Write successful {} api calls used".format(len(shares_owned)))
