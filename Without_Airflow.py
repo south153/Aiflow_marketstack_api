@@ -7,8 +7,8 @@ import pandas as pd
 
 # I am aware this is ridiculously over-engineered
 # these are your input variables change these to match your portfolio
-my_portfolio = ("MSFT", "BRKB", "TAN", "FSLR", "VOO","GME")
-shares_owned = [1, 2, 3, 4, 5,12]
+my_portfolio = ("MSFT", "BRKB", "TAN", "FSLR", "VOO")
+shares_owned = [1, 2, 3, 4, 5]
 
 # these are all constants
 TODAY = date.today()
@@ -26,11 +26,12 @@ def get_stock(stock_ticker):
     stock_list = stock_ticker
     params = {
         'access_key': API_KEY,
-        'symbols': stock_list}
-    api_result = requests.get('http://api.marketstack.com/v1/intraday/latest', params)
+        'symbols': stock_list
+        }
+    api_result = requests.get('http://api.marketstack.com/v1/eod/latest', params)
     api_response = api_result.json()
     for stock_data in api_response['data']:
-        STOCKS_LIST.append([TODAYS_DATE, stock_data['symbol'], stock_data['last']])
+        STOCKS_LIST.append([TODAYS_DATE, stock_data['symbol'], stock_data['close']])
     print(STOCKS_LIST)
 
 for i in my_portfolio:
