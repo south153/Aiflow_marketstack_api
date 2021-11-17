@@ -2,7 +2,7 @@ import requests
 import os
 from datetime import date
 import csv
-import pandas as pd
+
 
 
 # I am aware this is ridiculously over-engineered
