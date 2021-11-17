@@ -21,7 +21,7 @@ def first_function_execute(stock_ticker, **context):
     today = date.today()
     todays_date = today.strftime("%b-%d-%Y")
     stocks_list = []
-    API_KEY = 'f74ba0d0d10414840495409424bdc224'  # need to pass key manually for now don't know how to pass api key in continaer
+    API_KEY = 'ENTERKEYHERE'  # need to pass key manually for now don't know how to pass api key into a container
     stock_list = stock_ticker
     params = {
         'access_key': API_KEY,
@@ -29,7 +29,7 @@ def first_function_execute(stock_ticker, **context):
     api_result = requests.get('http://api.marketstack.com/v1/intraday/latest', params)
     api_response = api_result.json()
     for stock_data in api_response['data']:
-        stocks_list.append([todays_date, stock_data['symbol'], stock_data['last']])   #only returning las telement will fix later
+        stocks_list.append([todays_date, stock_data['symbol'], stock_data['last']])   #only returning last telement will fix later
     print(stocks_list)
     context['ti'].xcom_push(key='mykey', value=stocks_list)
 
