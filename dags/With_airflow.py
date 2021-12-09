@@ -36,7 +36,6 @@ def first_function_execute(stock_ticker, **context):
 def second_function_execute(**context):
     shares_owned = [1, 2, 3, 4, 5]
     instance = context.get("ti").xcom_pull(key="mykey")
-    data = [{"name":"Soumil","title":"Full Stack Software Engineer"}, { "name":"Nitin","title":"Full Stack Software Engineer"},]
     dates = [sublist[0] for sublist in instance]
     stock_codes = [sublist[1] for sublist in instance]
     price = [instance[0][2] * shares_owned[i] for i in range(len(shares_owned))]
